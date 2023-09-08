@@ -25,3 +25,6 @@ pnpm-debug.log*
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# github actions .cache dir
+.cache

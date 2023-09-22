@@ -1,19 +1,15 @@
-import {
-  MeetupFormValues,
-  getMeetupIssueBody,
-  meetupFormValuesSchema,
-} from 'meetup-shared';
+import { getMeetupIssueBody, meetupSchema, Meetup } from 'meetup-shared';
 import { App } from 'octokit';
 import { safeParseAsync } from 'valibot';
 import { Env } from './workerEnv';
 
 export async function parseCreateIssueReqBody(
   req: Request,
-): Promise<{ errorResponse: Response } | { parsedMeetup: MeetupFormValues }> {
+): Promise<{ errorResponse: Response } | { parsedMeetup: Meetup }> {
   try {
     const json = await req.json();
 
-    const meetupFormValues = await safeParseAsync(meetupFormValuesSchema, json);
+    const meetupFormValues = await safeParseAsync(meetupSchema, json);
 
     if (!meetupFormValues.success) {
       const issues = meetupFormValues.error.issues;
@@ -58,7 +54,7 @@ export async function parseCreateIssueReqBody(
 }
 
 export async function createIssue(props: {
-  meetupFormValues: MeetupFormValues;
+  meetupFormValues: Meetup;
   env: Env;
 }): Promise<
   | { errorResponse: Response }

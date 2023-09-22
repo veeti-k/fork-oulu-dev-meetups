@@ -6,7 +6,7 @@ import {
   getMeetupIssueCommentStatus,
   getMeetupMarkdownFileContent,
   getMeetupPullRequestContent,
-  meetupFormValuesToMeetup,
+  meetupIssueFormValuesToMeetup,
   parseMeetupIssueBody,
 } from 'meetup-shared';
 import fs from 'node:fs/promises';
@@ -37,31 +37,39 @@ async function main() {
   ]);
 
   try {
-    const meetupFormValues = await parseMeetupIssueBody(env.ISSUE_BODY);
+    const meetupIssueFormBody = await parseMeetupIssueBody(env.ISSUE_BODY);
 
-    if (!meetupFormValues.success) {
+    if (!meetupIssueFormBody.success) {
       throw new CustomError('Invalid issue body ', [
-        { status: 'error', issues: meetupFormValues.error.issues },
+        { status: 'error', issues: meetupIssueFormBody.error.issues },
         { status: 'idle' },
         { status: 'idle' },
       ]);
     }
 
-    const meetupResult = await meetupFormValuesToMeetup(meetupFormValues.data);
+    const meetupIssueFormValuesResult = await meetupIssueFormValuesToMeetup(
+      meetupIssueFormBody.data,
+    );
 
-    if (!meetupResult.success) {
+    if (!meetupIssueFormValuesResult.success) {
       throw new CustomError('Invalid issue body ', [
-        { status: 'error', issues: meetupResult.error.issues },
+        {
+          status: 'error',
+          issues: meetupIssueFormValuesResult.error.issues,
+        },
         { status: 'idle' },
         { status: 'idle' },
       ]);
     }
 
-    const meetup = meetupResult.data;
+    const meetupIssueFormValues = meetupIssueFormValuesResult.data;
 
-    const sanitizedMeetupTitle = sanitizeString(meetup.title);
+    const sanitizedMeetupTitle = sanitizeString(meetupIssueFormValues.title);
 
-    const sanitizedDate = format(meetup.date, 'yyyy-MM-dd-HH-mm');
+    const sanitizedDate = format(
+      meetupIssueFormValues.date,
+      'yyyy-MM-dd-HH-mm',
+    );
 
     await upsertComment.withSteps([
       { status: 'success' },
@@ -69,7 +77,7 @@ async function main() {
       { status: 'idle' },
     ]);
 
-    const newMeetupFile = getMeetupMarkdownFileContent(meetup);
+    const newMeetupFile = getMeetupMarkdownFileContent(meetupIssueFormValues);
 
     await fs
       .writeFile(
@@ -96,19 +104,18 @@ async function main() {
 
     const newBranchName = `new-meetup-${sanitizedMeetupTitle}-${sanitizedDate}`;
 
-    const pullRequestTitle = `New meetup: ${meetup.title}`;
+    const pullRequestTitle = `New meetup: ${meetupIssueFormValues.title}`;
     const pullRequestBody = getMeetupPullRequestContent(
-      meetup,
+      meetupIssueFormValues,
       env.ISSUE_NUMBER,
     );
 
     core.setOutput('branch_name', newBranchName);
     core.setOutput('pull_request_title', pullRequestTitle);
     core.setOutput('pull_request_body', pullRequestBody);
+    core.setOutput('comment_id', upsertComment.comment_id);
 
     core.info('Done');
-
-    core.setOutput('comment_id', upsertComment.comment_id);
   } catch (err) {
     if (err instanceof CustomError) {
       console.error('Error creating meetup - ', err);

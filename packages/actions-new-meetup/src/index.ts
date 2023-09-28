@@ -75,7 +75,7 @@ async function main() {
     const sanitizedMeetupTitle = sanitizeString(meetup.title);
     const sanitizedDate = format(meetup.date, 'yyyy-MM-dd-HH-mm');
 
-    const newBranchName = `new-meetup-${sanitizedMeetupTitle}-${sanitizedDate}`;
+    const newBranchName = `new-meetup-${env.ISSUE_NUMBER}`;
     const pullRequestTitle = `New meetup: ${meetup.title}`;
     const pullRequestBody = getMeetupPullRequestContent(
       meetup,
@@ -86,7 +86,7 @@ async function main() {
     const newMeetupFilePath = join(
       '../../',
       env.MEETUP_FOLDER,
-      `${sanitizedMeetupTitle}-${sanitizedDate}.md`,
+      `${sanitizedMeetupTitle}-${env.ISSUE_NUMBER}-${sanitizedDate}.md`,
     );
 
     await fs.writeFile(newMeetupFilePath, newMeetupFile).catch(() => {

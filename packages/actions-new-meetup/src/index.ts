@@ -6,8 +6,9 @@ import {
   getMeetupIssueCommentStatus,
   getMeetupMarkdownFileContent,
   getMeetupPullRequestContent,
-  meetupFormValuesToMeetup,
   parseMeetupIssueBody,
+  humanMeetupFormValuesToMeetup,
+  robotMeetupFormValuesToMeetup,
 } from 'meetup-shared';
 import fs from 'node:fs/promises';
 import { join } from 'node:path';
@@ -41,17 +42,24 @@ async function main() {
       env.ISSUE_BODY,
     );
 
-    if (!meetupIssueBodyParseResult.success) {
+    if (!meetupIssueBodyParseResult.result.success) {
       throw new CustomError('Invalid issue body ', [
-        { status: 'error', issues: meetupIssueBodyParseResult.error.issues },
+        {
+          status: 'error',
+          issues: meetupIssueBodyParseResult.result.error.issues,
+        },
         { status: 'idle' },
         { status: 'idle' },
       ]);
     }
 
-    const meetupParseResult = await meetupFormValuesToMeetup(
-      meetupIssueBodyParseResult.data,
-    );
+    const meetupParseResult = meetupIssueBodyParseResult.robot
+      ? await robotMeetupFormValuesToMeetup(
+          meetupIssueBodyParseResult.result.data,
+        )
+      : await humanMeetupFormValuesToMeetup(
+          meetupIssueBodyParseResult.result.data,
+        );
 
     if (!meetupParseResult.success) {
       throw new CustomError('Invalid issue body ', [

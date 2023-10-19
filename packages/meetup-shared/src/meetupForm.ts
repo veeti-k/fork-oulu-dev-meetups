@@ -47,7 +47,7 @@ export async function meetupFormValuesToMeetup(
 
   return safeParseAsync(meetupSchema, {
     ...rest,
-    date: `${date}T${time}:00Z`,
+    date: `${date}T${time}:00.000Z`,
   });
 }
 

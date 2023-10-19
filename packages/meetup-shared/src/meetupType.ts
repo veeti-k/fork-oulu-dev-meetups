@@ -6,10 +6,10 @@ import {
   transform,
   isoTimestamp,
 } from 'valibot';
-import { type MeetupFormField } from './meetupForm';
+import { type SharedMeetupFormField } from './meetupForm';
 import { parseISO } from 'date-fns';
 
-type MeetupField = Exclude<MeetupFormField, 'time' | 'date'> & { date: Date };
+type MeetupField = SharedMeetupFormField & { date: Date };
 
 export const meetupSchema = object({
   title: string(),
